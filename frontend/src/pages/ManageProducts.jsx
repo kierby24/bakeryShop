@@ -5,17 +5,14 @@ import QuickOrder from "../components/QuickOrder";
 import LowStock from "../components/LowStock";
 import RecentActivity from "../components/RecentActivity";
 
-function Dashboard() {
+function ManageProducts() {
   return (
     <div className="dashboard-layout">
 
       {/* SIDEBAR - DON'T CHANGE */}
-      <Sidebar />
 
       {/* MAIN CONTENT */}
       <main className="main-content">
-
-        <Header />
 
         <section className="dashboard-content">
 
@@ -278,4 +275,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default ManageProducts;
