@@ -9,7 +9,7 @@ import ManageOrders from "../pages/ManageOrders";
 import ManageSales from "../pages/ManageSales";
 import GenerateReports from "../pages/GenerateReports";
 
-function SidebarLayout() {
+function SidebarLayout({ onLogout }) {
   const [currentPage, setCurrentPage] = useState("products");
 
   return (
@@ -22,7 +22,7 @@ function SidebarLayout() {
 
       <main className="main-content">
 
-        <Header />
+      <Header onLogout={onLogout} />
 
         {currentPage === "products" && (
           <ManageProducts />

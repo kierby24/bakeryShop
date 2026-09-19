@@ -1,260 +1,541 @@
+import { useMemo, useState } from "react";
 import {
-    Search,
-    Package,
-    AlertTriangle,
-    CheckCircle,
-    XCircle,
-    Plus,
-    Minus
-  } from "lucide-react";
-  
-  function ManageInventory() {
-    const inventory = [
-      {
-        id: 1,
-        product: "Chocolate Cake",
-        category: "Cakes",
-        stock: 25,
-        minimum: 10,
-        status: "In Stock"
-      },
-      {
-        id: 2,
-        product: "Strawberry Cupcake",
-        category: "Cupcakes",
-        stock: 8,
-        minimum: 10,
-        status: "Low Stock"
-      },
-      {
-        id: 3,
-        product: "Butter Croissant",
-        category: "Pastries",
-        stock: 18,
-        minimum: 8,
-        status: "In Stock"
-      },
-      {
-        id: 4,
-        product: "Chocolate Chip Cookie",
-        category: "Cookies",
-        stock: 5,
-        minimum: 10,
-        status: "Low Stock"
-      },
-      {
-        id: 5,
-        product: "French Bread",
-        category: "Bread",
-        stock: 0,
-        minimum: 5,
-        status: "Out of Stock"
-      },
-      {
-        id: 6,
-        product: "Iced Coffee",
-        category: "Beverages",
-        stock: 32,
-        minimum: 10,
-        status: "In Stock"
-      }
-    ];
-  
-    return (
-      <section className="inventory-content">
-  
-        {/* HEADER */}
-        <div className="inventory-header">
+  Search,
+  Package,
+  AlertTriangle,
+  CircleCheck,
+  CircleX,
+  Pencil,
+  X
+} from "lucide-react";
+import { useAppData } from "../AppDataContext";
+
+function ManageInventory() {
+  const {
+    products,
+    categories,
+    updateProduct
+  } = useAppData();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [stockFilter, setStockFilter] = useState("All");
+
+  const [showModal, setShowModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [stockValue, setStockValue] = useState("");
+
+  const LOW_STOCK_LIMIT = 10;
+
+  const getStockStatus = (stock) => {
+    if (stock === 0) {
+      return "Out of Stock";
+    }
+
+    if (stock <= LOW_STOCK_LIMIT) {
+      return "Low Stock";
+    }
+
+    return "In Stock";
+  };
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch =
+        product.name
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+
+      const matchesCategory =
+        categoryFilter === "All" ||
+        product.category === categoryFilter;
+
+      const matchesStock =
+        stockFilter === "All" ||
+        getStockStatus(product.stock) === stockFilter;
+
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesStock
+      );
+    });
+  }, [
+    products,
+    searchTerm,
+    categoryFilter,
+    stockFilter
+  ]);
+
+  const totalProducts = products.length;
+
+  const inStockCount = products.filter(
+    (product) => product.stock > LOW_STOCK_LIMIT
+  ).length;
+
+  const lowStockCount = products.filter(
+    (product) =>
+      product.stock > 0 &&
+      product.stock <= LOW_STOCK_LIMIT
+  ).length;
+
+  const outOfStockCount = products.filter(
+    (product) => product.stock === 0
+  ).length;
+
+  const totalStock = products.reduce(
+    (total, product) =>
+      total + Number(product.stock || 0),
+    0
+  );
+
+  const openStockModal = (product) => {
+    setEditingProduct(product);
+    setStockValue(product.stock);
+    setShowModal(true);
+  };
+
+  const closeStockModal = () => {
+    setShowModal(false);
+    setEditingProduct(null);
+    setStockValue("");
+  };
+
+  const handleStockUpdate = (e) => {
+    e.preventDefault();
+
+    const newStock = Number(stockValue);
+
+    if (!Number.isInteger(newStock) || newStock < 0) {
+      alert("Stock must be a whole number greater than or equal to 0.");
+      return;
+    }
+
+    updateProduct(editingProduct.id, {
+      ...editingProduct,
+      stock: newStock
+    });
+
+    closeStockModal();
+  };
+
+  return (
+    <div className="inventory-content">
+
+      {/* HEADER */}
+      <div className="inventory-header">
+
+        <div>
+          <h1>Manage Inventory</h1>
+
+          <p>
+            Monitor product stock levels and inventory status.
+          </p>
+        </div>
+
+      </div>
+
+      {/* SUMMARY CARDS */}
+      <div className="inventory-summary">
+
+        <div className="inventory-summary-card">
+
+          <div className="inventory-summary-icon">
+            <Package size={24} />
+          </div>
+
           <div>
-            <h1>Manage Inventory</h1>
+            <span>Total Products</span>
+            <strong>{totalProducts}</strong>
+          </div>
+
+        </div>
+
+
+        <div className="inventory-summary-card">
+
+          <div className="inventory-summary-icon">
+            <CircleCheck size={24} />
+          </div>
+
+          <div>
+            <span>In Stock</span>
+            <strong>{inStockCount}</strong>
+          </div>
+
+        </div>
+
+
+        <div className="inventory-summary-card">
+
+          <div className="inventory-summary-icon">
+            <AlertTriangle size={24} />
+          </div>
+
+          <div>
+            <span>Low Stock</span>
+            <strong>{lowStockCount}</strong>
+          </div>
+
+        </div>
+
+
+        <div className="inventory-summary-card">
+
+          <div className="inventory-summary-icon">
+            <CircleX size={24} />
+          </div>
+
+          <div>
+            <span>Out of Stock</span>
+            <strong>{outOfStockCount}</strong>
+          </div>
+
+        </div>
+
+
+        <div className="inventory-summary-card">
+
+          <div className="inventory-summary-icon">
+            <Package size={24} />
+          </div>
+
+          <div>
+            <span>Total Stock Units</span>
+            <strong>{totalStock}</strong>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* TOOLBAR */}
+      <div className="inventory-toolbar">
+
+        <div className="inventory-search">
+
+          <Search size={20} />
+
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) =>
+              setSearchTerm(e.target.value)
+            }
+          />
+
+        </div>
+
+
+        <select
+          className="inventory-filter"
+          value={categoryFilter}
+          onChange={(e) =>
+            setCategoryFilter(e.target.value)
+          }
+        >
+          <option value="All">
+            All Categories
+          </option>
+
+          {categories.map((category) => (
+            <option
+              key={category.id}
+              value={category.name}
+            >
+              {category.name}
+            </option>
+          ))}
+
+        </select>
+
+
+        <select
+          className="inventory-filter"
+          value={stockFilter}
+          onChange={(e) =>
+            setStockFilter(e.target.value)
+          }
+        >
+          <option value="All">
+            All Stock Status
+          </option>
+
+          <option value="In Stock">
+            In Stock
+          </option>
+
+          <option value="Low Stock">
+            Low Stock
+          </option>
+
+          <option value="Out of Stock">
+            Out of Stock
+          </option>
+
+        </select>
+
+      </div>
+
+
+      {/* INVENTORY TABLE */}
+      <div className="inventory-panel">
+
+        <div className="inventory-panel-header">
+
+          <div>
+            <h2>Inventory Overview</h2>
+
             <p>
-              Monitor and manage your bakery product stock.
+              {filteredProducts.length} product
+              {filteredProducts.length === 1
+                ? ""
+                : "s"} found
             </p>
           </div>
-  
-          <button className="add-stock-btn">
-            <Plus size={19} />
-            Add Stock
-          </button>
+
         </div>
-  
-        {/* SUMMARY CARDS */}
-        <div className="inventory-summary">
-  
-          <div className="inventory-summary-card">
-            <div className="inventory-summary-icon">
-              <Package size={22} />
-            </div>
-  
-            <div>
-              <span>Total Products</span>
-              <strong>48</strong>
-            </div>
-          </div>
-  
-          <div className="inventory-summary-card">
-            <div className="inventory-summary-icon warning">
-              <AlertTriangle size={22} />
-            </div>
-  
-            <div>
-              <span>Low Stock</span>
-              <strong>5</strong>
-            </div>
-          </div>
-  
-          <div className="inventory-summary-card">
-            <div className="inventory-summary-icon danger">
-              <XCircle size={22} />
-            </div>
-  
-            <div>
-              <span>Out of Stock</span>
-              <strong>2</strong>
-            </div>
-          </div>
-  
-          <div className="inventory-summary-card">
-            <div className="inventory-summary-icon success">
-              <CheckCircle size={22} />
-            </div>
-  
-            <div>
-              <span>In Stock</span>
-              <strong>41</strong>
-            </div>
-          </div>
-  
-        </div>
-  
-        {/* TOOLBAR */}
-        <div className="inventory-toolbar">
-  
-          <div className="inventory-search">
-            <Search size={19} />
-  
-            <input
-              type="text"
-              placeholder="Search inventory..."
-            />
-          </div>
-  
-        </div>
-  
-        {/* INVENTORY TABLE */}
-        <div className="inventory-panel">
-  
-          <div className="inventory-panel-title">
-            <div>
-              <h2>Inventory List</h2>
-              <p>
-                Monitor current stock levels of bakery products.
-              </p>
-            </div>
-          </div>
-  
-          <div className="inventory-table-wrapper">
-  
-            <table className="inventory-table">
-  
-              <thead>
+
+
+        <div className="inventory-table-wrapper">
+
+          <table className="inventory-table">
+
+            <thead>
+
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Current Stock</th>
+                <th>Stock Status</th>
+                <th>Actions</th>
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+              {filteredProducts.length > 0 ? (
+
+                filteredProducts.map((product) => {
+
+                  const status =
+                    getStockStatus(product.stock);
+
+                  return (
+                    <tr key={product.id}>
+
+                      <td>
+
+                        <div className="inventory-product-cell">
+
+                          <div className="inventory-product-icon">
+                            <Package size={20} />
+                          </div>
+
+                          <strong>
+                            {product.name}
+                          </strong>
+
+                        </div>
+
+                      </td>
+
+
+                      <td>
+
+                        <span className="inventory-category">
+                          {product.category}
+                        </span>
+
+                      </td>
+
+
+                      <td>
+
+                        <span className="inventory-stock-number">
+                          {product.stock}
+                        </span>
+
+                      </td>
+
+
+                      <td>
+
+                        <span
+                          className={`inventory-status ${
+                            status
+                              .toLowerCase()
+                              .replaceAll(" ", "-")
+                          }`}
+                        >
+                          {status}
+                        </span>
+
+                      </td>
+
+
+                      <td>
+
+                        <button
+                          className="inventory-edit-btn"
+                          onClick={() =>
+                            openStockModal(product)
+                          }
+                          title="Update stock"
+                        >
+                          <Pencil size={17} />
+                          Update Stock
+                        </button>
+
+                      </td>
+
+                    </tr>
+                  );
+
+                })
+
+              ) : (
+
                 <tr>
-                  <th>Product</th>
-                  <th>Category</th>
-                  <th>Current Stock</th>
-                  <th>Minimum Stock</th>
-                  <th>Status</th>
-                  <th>Adjust Stock</th>
+
+                  <td
+                    colSpan="5"
+                    className="inventory-empty"
+                  >
+
+                    <Package size={42} />
+
+                    <h3>
+                      No products found
+                    </h3>
+
+                    <p>
+                      Try changing your search or filters.
+                    </p>
+
+                  </td>
+
                 </tr>
-              </thead>
-  
-              <tbody>
-  
-                {inventory.map((item) => (
-  
-                  <tr key={item.id}>
-  
-                    <td>
-                      <div className="inventory-product">
-                        <div className="inventory-product-icon">
-                          <Package size={20} />
-                        </div>
-  
-                        <div>
-                          <strong>{item.product}</strong>
-                          <small>
-                            Product #{item.id}
-                          </small>
-                        </div>
-                      </div>
-                    </td>
-  
-                    <td>
-                      <span className="inventory-category">
-                        {item.category}
-                      </span>
-                    </td>
-  
-                    <td>
-                      <strong className="stock-number">
-                        {item.stock}
-                      </strong>
-                    </td>
-  
-                    <td>
-                      <span className="minimum-stock">
-                        {item.minimum}
-                      </span>
-                    </td>
-  
-                    <td>
-                      <span
-                        className={`inventory-status ${
-                          item.status === "In Stock"
-                            ? "in-stock"
-                            : item.status === "Low Stock"
-                            ? "low-stock"
-                            : "out-stock"
-                        }`}
-                      >
-                        {item.status}
-                      </span>
-                    </td>
-  
-                    <td>
-                      <div className="stock-actions">
-  
-                        <button
-                          className="stock-minus"
-                          title="Remove Stock"
-                        >
-                          <Minus size={16} />
-                        </button>
-  
-                        <button
-                          className="stock-plus"
-                          title="Add Stock"
-                        >
-                          <Plus size={16} />
-                        </button>
-  
-                      </div>
-                    </td>
-  
-                  </tr>
-  
-                ))}
-  
-              </tbody>
-  
-            </table>
-  
-          </div>
-  
+
+              )}
+
+            </tbody>
+
+          </table>
+
         </div>
-  
-      </section>
-    );
-  }
-  
-  export default ManageInventory;
+
+      </div>
+
+
+      {/* UPDATE STOCK MODAL */}
+      {showModal && editingProduct && (
+
+        <div className="inventory-modal-overlay">
+
+          <div className="inventory-modal">
+
+            <div className="inventory-modal-header">
+
+              <div>
+
+                <h2>
+                  Update Stock
+                </h2>
+
+                <p>
+                  {editingProduct.name}
+                </p>
+
+              </div>
+
+
+              <button
+                className="inventory-modal-close"
+                onClick={closeStockModal}
+              >
+                <X size={22} />
+              </button>
+
+            </div>
+
+
+            <form
+              className="inventory-form"
+              onSubmit={handleStockUpdate}
+            >
+
+              <div className="inventory-form-product">
+
+                <Package size={24} />
+
+                <div>
+                  <strong>
+                    {editingProduct.name}
+                  </strong>
+
+                  <span>
+                    Current stock:{" "}
+                    {editingProduct.stock}
+                  </span>
+                </div>
+
+              </div>
+
+
+              <div className="inventory-form-group">
+
+                <label>
+                  New Stock Quantity
+                </label>
+
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={stockValue}
+                  onChange={(e) =>
+                    setStockValue(e.target.value)
+                  }
+                  required
+                />
+
+              </div>
+
+
+              <div className="inventory-form-actions">
+
+                <button
+                  type="button"
+                  className="inventory-cancel-btn"
+                  onClick={closeStockModal}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="inventory-save-btn"
+                >
+                  Update Stock
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
+
+        </div>
+
+      )}
+
+    </div>
+  );
+}
+
+export default ManageInventory;

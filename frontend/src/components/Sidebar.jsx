@@ -1,3 +1,5 @@
+import bakeryLogo from "../assets/bakery-logo.png";
+
 import {
   CakeSlice,
   Tag,
@@ -53,13 +55,17 @@ function Sidebar({ onNavigate, currentPage }) {
 
       {/* LOGO */}
       <div className="logo-section">
-        <div className="logo-icon">🧁</div>
+      <img
+        src={bakeryLogo}
+        alt="Tin & Din Bakery Logo"
+        className="bakery-logo"
+      />
 
-        <div className="logo-text">
-          <h2>Sweet Cravings</h2>
-          <span>Bakery</span>
-        </div>
+      <div className="logo-text">
+        <h2>Tin & Din</h2>
+        <span>Bakery</span>
       </div>
+    </div>
 
       {/* NAVIGATION */}
       <nav className="sidebar-navigation">
@@ -92,11 +98,6 @@ function Sidebar({ onNavigate, currentPage }) {
         </div>
       </div>
 
-      {/* LOGOUT */}
-      <button className="logout-button">
-        <LogOut size={22} />
-        <span>Logout</span>
-      </button>
 
     </aside>
   );
